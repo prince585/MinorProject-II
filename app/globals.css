@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  /* Natural Earth Tones Palette */
+  --background: #fdfbf7; /* Warm off-white/cream */
+  --foreground: #1c1c1c; /* Soft black */
+  
+  /* Primary Brand Colors */
+  --color-primary: #2d6a4f; /* Deep forest green */
+  --color-primary-light: #52b788; /* Fresh leaf green */
+  --color-primary-dark: #1b4332; /* Darker heavy green */
+  
+  /* Accent Colors */
+  --color-accent: #d9ed92; /* Light lime/sprout */
+  --color-secondary: #40916c; /* Medium sea green */
+  
+  /* Neutral/UI Colors */
+  --color-surface: #ffffff;
+  --color-surface-dim: #f0f0f0;
+  --color-border: #e5e5e5;
+  --color-error: #e63946;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  
+  --color-primary: var(--color-primary);
+  --color-primary-light: var(--color-primary-light);
+  --color-primary-dark: var(--color-primary-dark);
+  
+  --color-accent: var(--color-accent);
+  --color-secondary: var(--color-secondary);
+  
+  --color-surface: var(--color-surface);
+  --color-surface-dim: var(--color-surface-dim);
+  --color-border: var(--color-border);
+  --color-error: var(--color-error);
+  
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0d1b1e; /* Deep dark teal-grey */
+    --foreground: #ecf3f1;
+    
+    --color-primary: #40916c; /* Brighter in dark mode */
+    --color-primary-light: #74c69d;
+    --color-primary-dark: #2d6a4f;
+    
+    --color-surface: #16262b;
+    --color-surface-dim: #1f363d;
+    --color-border: #2c4a52;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
