@@ -6,15 +6,22 @@ import { loginSchema } from "../../../lib/validations";
 import { signAuthToken } from "@/app/lib/auth";
 import { ensureDefaultAccounts } from "@/app/lib/seed";
 import { apiErrorResponse, logServerError } from "@/app/lib/apiError";
+import mongoose from "mongoose";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+    let requestBody: unknown = null;
+    let stage = "init";
+    let queryContext: Record<string, unknown> | null = null;
+
     try {
         let body;
 
         try {
+            stage = "parse_json";
             body = await req.json();
+            requestBody = body;
         } catch (error) {
             console.error("Login request JSON parse error:", error);
             return NextResponse.json(
@@ -24,6 +31,7 @@ export async function POST(req: Request) {
         }
 
         // Validate request body
+        stage = "validate_payload";
         const validation = loginSchema.safeParse(body);
 
         if (!validation.success) {
@@ -36,7 +44,9 @@ export async function POST(req: Request) {
 
         const { username, password, phoneNumber, role } = validation.data;
 
+        stage = "db_connect";
         await dbConnect();
+        stage = "seed_default_accounts";
         try {
             await ensureDefaultAccounts();
         } catch (error: any) {
@@ -51,6 +61,12 @@ export async function POST(req: Request) {
 
         const trimmedIdentifier = username.trim();
         const normalizedIdentifier = trimmedIdentifier.toLowerCase();
+        stage = "find_user";
+        queryContext = {
+            trimmedIdentifier,
+            normalizedIdentifier,
+            requestedRole: role ?? null,
+        };
         const user = await User.findOne({
             $or: [
                 { username: trimmedIdentifier },
@@ -87,6 +103,7 @@ export async function POST(req: Request) {
             );
         }
 
+        stage = "compare_password";
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
@@ -97,6 +114,7 @@ export async function POST(req: Request) {
         }
 
         // Generate JWT
+        stage = "sign_jwt";
         const token = signAuthToken({
             userId: String(user._id),
             username: user.username,
@@ -131,6 +149,22 @@ export async function POST(req: Request) {
         return response;
 
     } catch (error: any) {
+        console.error("Login fatal error details:", {
+            stage,
+            requestBody: requestBody && typeof requestBody === "object"
+                ? {
+                    ...(requestBody as Record<string, unknown>),
+                    password: "[REDACTED]",
+                }
+                : requestBody,
+            queryContext,
+            mongooseReadyState: mongoose.connection.readyState,
+            hasJwtSecret: Boolean(process.env.JWT_SECRET?.trim()),
+            message: error?.message,
+            name: error?.name,
+            code: error?.code,
+            stack: error?.stack,
+        });
         return apiErrorResponse("Login", error);
     }
 }
