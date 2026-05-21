@@ -15,20 +15,28 @@ const cached = globalThis.mongooseCache ?? (globalThis.mongooseCache = {
 });
 
 async function dbConnect() {
-    const mongoUri = process.env.MONGO_URI?.trim();
+    const mongoUri =
+        process.env.MONGO_URI?.trim() ||
+        process.env.MONGODB_URI?.trim();
+    const mongoEnvSource = process.env.MONGO_URI?.trim()
+        ? "MONGO_URI"
+        : process.env.MONGODB_URI?.trim()
+            ? "MONGODB_URI"
+            : null;
     const readyState = mongoose.connection.readyState;
     const hasMongoUri = Boolean(mongoUri);
 
     console.info("[dbConnect] Runtime diagnostics", {
         nodeEnv: process.env.NODE_ENV,
         hasMongoUri,
+        mongoEnvSource,
         readyState,
     });
 
     if (!mongoUri) {
-        console.error("[dbConnect] Missing required environment variable: MONGO_URI");
+        console.error("[dbConnect] Missing required environment variable: MONGO_URI or MONGODB_URI");
         throw new Error(
-            "MONGO_URI is not configured. Add it to your local .env.local file and to your Vercel Environment Variables."
+            "MongoDB URI is not configured. Set MONGO_URI (preferred) or MONGODB_URI in .env.local and Vercel."
         );
     }
 

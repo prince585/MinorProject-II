@@ -5,8 +5,13 @@ import mongoose from "mongoose";
 export const runtime = "nodejs";
 
 export async function GET() {
-    const hasMongoUri = Boolean(process.env.MONGO_URI?.trim());
+    const hasMongoUri = Boolean(process.env.MONGO_URI?.trim() || process.env.MONGODB_URI?.trim());
     const hasJwtSecret = Boolean(process.env.JWT_SECRET?.trim());
+    const mongoEnvSource = process.env.MONGO_URI?.trim()
+        ? "MONGO_URI"
+        : process.env.MONGODB_URI?.trim()
+            ? "MONGODB_URI"
+            : null;
 
     try {
         await dbConnect();
@@ -19,7 +24,9 @@ export async function GET() {
                 runtime: "nodejs",
                 env: {
                     MONGO_URI: hasMongoUri,
+                    MONGODB_URI: Boolean(process.env.MONGODB_URI?.trim()),
                     JWT_SECRET: hasJwtSecret,
+                    mongoEnvSource,
                 },
             },
             { status: 200 }
@@ -41,7 +48,9 @@ export async function GET() {
                 error: error?.message || "Health check failed",
                 env: {
                     MONGO_URI: hasMongoUri,
+                    MONGODB_URI: Boolean(process.env.MONGODB_URI?.trim()),
                     JWT_SECRET: hasJwtSecret,
+                    mongoEnvSource,
                 },
             },
             { status: 503 }

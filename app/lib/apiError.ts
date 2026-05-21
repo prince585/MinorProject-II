@@ -33,9 +33,9 @@ export function apiErrorResponse(scope: string, error: any) {
         );
     }
 
-    if (error?.message?.includes("MONGO_URI")) {
+    if (error?.message?.includes("MONGO_URI") || error?.message?.includes("MONGODB_URI") || error?.message?.includes("MongoDB URI")) {
         return NextResponse.json(
-            { error: "MONGO_URI is missing in Vercel Environment Variables." },
+            { error: "MongoDB URI is missing. Set MONGO_URI (preferred) or MONGODB_URI in Environment Variables." },
             { status: 503 }
         );
     }
