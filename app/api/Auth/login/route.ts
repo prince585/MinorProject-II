@@ -62,10 +62,18 @@ export async function POST(req: Request) {
             );
         }
 
+        const jwtSecret = process.env.JWT_SECRET;
+
+        if (!jwtSecret) {
+            throw new Error(
+                "JWT_SECRET is not configured. Add it to your local .env.local file and to your Vercel Environment Variables."
+            );
+        }
+
         // Generate JWT
         const token = jwt.sign(
             { userId: user._id, username: user.username, email: user.email },
-            process.env.JWT_SECRET || "default_secret_please_change",
+            jwtSecret,
             { expiresIn: "1d" }
         );
 

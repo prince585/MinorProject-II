@@ -1,29 +1,28 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGO_URI;
-
-if (!MONGODB_URI) {
-    throw new Error(
-        "Please define the MONGO_URI environment variable inside .env.local"
-    );
-}
-
 interface MongooseCache {
     conn: typeof mongoose | null;
     promise: Promise<typeof mongoose> | null;
 }
 
 declare global {
-    var mongoose: MongooseCache;
+    var mongooseCache: MongooseCache | undefined;
 }
 
-let cached = global.mongoose;
-
-if (!cached) {
-    cached = global.mongoose = { conn: null, promise: null };
-}
+const cached = globalThis.mongooseCache ?? (globalThis.mongooseCache = {
+    conn: null,
+    promise: null,
+});
 
 async function dbConnect() {
+    const mongoUri = process.env.MONGO_URI;
+
+    if (!mongoUri) {
+        throw new Error(
+            "MONGO_URI is not configured. Add it to your local .env.local file and to your Vercel Environment Variables."
+        );
+    }
+
     if (cached.conn) {
         return cached.conn;
     }
@@ -33,9 +32,7 @@ async function dbConnect() {
             bufferCommands: false,
         };
 
-        cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-            return mongoose;
-        });
+        cached.promise = mongoose.connect(mongoUri, opts);
     }
 
     try {
