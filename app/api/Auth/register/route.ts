@@ -40,6 +40,8 @@ export async function POST(req: Request) {
         }
 
         const { username, email, password, phoneNumber, address, location } = validation.data;
+        const normalizedUsername = username.trim();
+        const normalizedEmail = email.trim().toLowerCase();
 
         await dbConnect();
 
@@ -50,7 +52,7 @@ export async function POST(req: Request) {
 
         // Check if user already exists
         const existingUser = await User.findOne({
-            $or: [{ email }, { username }]
+            $or: [{ email: normalizedEmail }, { username: normalizedUsername }]
         });
 
         if (existingUser) {
@@ -82,8 +84,8 @@ export async function POST(req: Request) {
 
         // Create new user
         const newUser = await User.create({
-            username,
-            email,
+            username: normalizedUsername,
+            email: normalizedEmail,
             password: hashedPassword,
             phoneNumber,
             role: "citizen",

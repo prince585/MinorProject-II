@@ -49,10 +49,11 @@ export async function POST(req: Request) {
         // However, User model makes phoneNumber optional. 
         // We will stick to username lookup primarily.
 
-        const normalizedIdentifier = username.trim().toLowerCase();
+        const trimmedIdentifier = username.trim();
+        const normalizedIdentifier = trimmedIdentifier.toLowerCase();
         const user = await User.findOne({
             $or: [
-                { username: username.trim() },
+                { username: trimmedIdentifier },
                 { email: normalizedIdentifier },
             ],
         });
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
         }
 
         // Optional: strict check if phoneNumber was provided and must match
-        if (user.role === "citizen" && phoneNumber && user.phoneNumber !== phoneNumber) {
+        if (user.role === "citizen" && phoneNumber?.trim() && user.phoneNumber !== phoneNumber.trim()) {
             return NextResponse.json(
                 { error: "Invalid credentials" }, // Obscure detail
                 { status: 401 }

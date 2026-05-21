@@ -17,7 +17,7 @@ interface RoleLoginPageProps {
 
 function getErrorMessage(error: unknown) {
     if (typeof error === "string") return error;
-    if (error && typeof error === "object") return "Please check your login details and try again.";
+    if (error && typeof error === "object") return "Login failed. Please verify server configuration and credentials.";
     return "Login failed. Please check your credentials.";
 }
 

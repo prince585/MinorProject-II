@@ -33,7 +33,10 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 function getErrorMessage(error: unknown) {
     if (typeof error === "string") return error;
-    if (error && typeof error === "object") return "Please check the highlighted fields and try again.";
+    if (error && typeof error === "object") {
+        if ("_errors" in error) return "Please check the highlighted fields and try again.";
+        return "Registration failed. Please check your configuration and try again.";
+    }
     return "Registration failed. Please try again.";
 }
 

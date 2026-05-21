@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -13,7 +14,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 function getErrorMessage(error: unknown) {
     if (typeof error === "string") return error;
-    if (error && typeof error === "object") return "Please check your login details and try again.";
+    if (error && typeof error === "object") return "Login failed. Please verify server configuration and credentials.";
     return "Invalid credentials. Please try again.";
 }
 
