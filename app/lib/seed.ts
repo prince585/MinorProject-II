@@ -8,6 +8,10 @@ const DEFAULT_ACCOUNTS = [
         password: "Admin@123",
         phoneNumber: "9999999999",
         address: "EcoTracker Municipality Control Center",
+        location: {
+            type: "Point",
+            coordinates: [77.2090, 28.6139],
+        },
         role: "admin" as const,
     },
     {
@@ -16,6 +20,10 @@ const DEFAULT_ACCOUNTS = [
         password: "Driver@123",
         phoneNumber: "8888888888",
         address: "EcoTracker Vehicle Depot",
+        location: {
+            type: "Point",
+            coordinates: [77.2090, 28.6139],
+        },
         role: "driver" as const,
     },
 ];
@@ -51,6 +59,7 @@ async function seedDefaultAccounts() {
             password: hashedPassword,
             phoneNumber: account.phoneNumber,
             address: account.address,
+            location: account.location,
             role: account.role,
         });
     }

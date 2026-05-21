@@ -58,13 +58,15 @@ export async function POST(req: Request) {
             location.coordinates.length === 2 &&
             location.coordinates.every((coordinate) => Number.isFinite(coordinate));
 
-        if (location && !hasValidLocation) {
+        if (!hasValidLocation) {
             console.error("Registration invalid location payload:", location);
             return NextResponse.json(
-                { error: "Invalid location coordinates" },
+                { error: "Valid location coordinates are required" },
                 { status: 400 }
             );
         }
+
+        const validLocation = location as { type: "Point"; coordinates: number[] };
 
         // Create new user
         const newUser = await User.create({
@@ -74,10 +76,10 @@ export async function POST(req: Request) {
             phoneNumber,
             role: "citizen",
             address,
-            location: hasValidLocation ? {
+            location: {
                 type: "Point",
-                coordinates: location.coordinates
-            } : undefined
+                coordinates: validLocation.coordinates
+            }
         });
 
         return NextResponse.json(
