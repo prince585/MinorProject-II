@@ -3,6 +3,8 @@ import dbConnect from "@/app/lib/db";
 import Vehicle from "@/app/models/Vehicle/vehicle";
 import User from "@/app/models/User/user";
 
+export const runtime = "nodejs";
+
 // GET: Fetch the current active vehicle's location
 export async function GET(req: Request) {
     try {
@@ -15,8 +17,13 @@ export async function GET(req: Request) {
         }
 
         return NextResponse.json(vehicle, { status: 200 });
-    } catch (error) {
-        console.error("Error fetching vehicle:", error);
+    } catch (error: any) {
+        console.error("Error fetching vehicle:", {
+            message: error?.message,
+            name: error?.name,
+            code: error?.code,
+            stack: error?.stack,
+        });
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -54,8 +61,13 @@ export async function POST(req: Request) {
         );
 
         return NextResponse.json(vehicle, { status: 200 });
-    } catch (error) {
-        console.error("Error updating vehicle:", error);
+    } catch (error: any) {
+        console.error("Error updating vehicle:", {
+            message: error?.message,
+            name: error?.name,
+            code: error?.code,
+            stack: error?.stack,
+        });
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

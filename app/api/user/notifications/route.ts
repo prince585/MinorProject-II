@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/app/lib/db";
 import Notification from "@/app/models/Notification/notification";
 
+export const runtime = "nodejs";
+
 // GET: Fetch notifications for a user
 export async function GET(req: Request) {
     try {
@@ -18,8 +20,13 @@ export async function GET(req: Request) {
             .limit(20); // Limit to last 20 notifications
 
         return NextResponse.json(notifications, { status: 200 });
-    } catch (error) {
-        console.error("Fetch notifications error:", error);
+    } catch (error: any) {
+        console.error("Fetch notifications error:", {
+            message: error?.message,
+            name: error?.name,
+            code: error?.code,
+            stack: error?.stack,
+        });
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
@@ -40,8 +47,13 @@ export async function PUT(req: Request) {
         );
 
         return NextResponse.json({ message: "Notifications marked as read" }, { status: 200 });
-    } catch (error) {
-        console.error("Update notifications error:", error);
+    } catch (error: any) {
+        console.error("Update notifications error:", {
+            message: error?.message,
+            name: error?.name,
+            code: error?.code,
+            stack: error?.stack,
+        });
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/app/lib/db";
 import User from "@/app/models/User/user";
 
+export const runtime = "nodejs";
+
 export async function GET(req: Request) {
     try {
         await dbConnect();
@@ -10,8 +12,13 @@ export async function GET(req: Request) {
             .select("username location address");
 
         return NextResponse.json(users, { status: 200 });
-    } catch (error) {
-        console.error("Fetch users error:", error);
+    } catch (error: any) {
+        console.error("Fetch users error:", {
+            message: error?.message,
+            name: error?.name,
+            code: error?.code,
+            stack: error?.stack,
+        });
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

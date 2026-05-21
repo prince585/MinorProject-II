@@ -23,13 +23,20 @@ async function dbConnect() {
         );
     }
 
-    if (cached.conn) {
+    if (cached.conn?.connection.readyState === 1) {
         return cached.conn;
+    }
+
+    if (cached.conn) {
+        cached.conn = null;
+        cached.promise = null;
     }
 
     if (!cached.promise) {
         const opts = {
             bufferCommands: false,
+            maxPoolSize: 10,
+            serverSelectionTimeoutMS: 10000,
         };
 
         cached.promise = mongoose.connect(mongoUri, opts);
@@ -39,7 +46,7 @@ async function dbConnect() {
         cached.conn = await cached.promise;
         console.log("MongoDB connected successfully");
     } catch (e) {
-        console.log("MongoDB connection failed", e);
+        console.error("MongoDB connection failed", e);
         cached.promise = null;
         throw e;
     }

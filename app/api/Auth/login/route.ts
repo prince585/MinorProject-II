@@ -5,14 +5,27 @@ import dbConnect from "../../../lib/db";
 import User from "../../../models/User/user";
 import { loginSchema } from "../../../lib/validations";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
+        let body;
+
+        try {
+            body = await req.json();
+        } catch (error) {
+            console.error("Login request JSON parse error:", error);
+            return NextResponse.json(
+                { error: "Invalid request body" },
+                { status: 400 }
+            );
+        }
 
         // Validate request body
         const validation = loginSchema.safeParse(body);
 
         if (!validation.success) {
+            console.error("Login validation error:", validation.error.flatten());
             return NextResponse.json(
                 { error: validation.error.format() },
                 { status: 400 }
@@ -104,7 +117,12 @@ export async function POST(req: Request) {
         return response;
 
     } catch (error: any) {
-        console.error("Login error:", error);
+        console.error("Login error:", {
+            message: error?.message,
+            name: error?.name,
+            code: error?.code,
+            stack: error?.stack,
+        });
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

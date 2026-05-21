@@ -5,6 +5,8 @@ import User from "@/app/models/User/user";
 import Notification from "@/app/models/Notification/notification";
 import Vehicle from "@/app/models/Vehicle/vehicle";
 
+export const runtime = "nodejs";
+
 export async function POST(req: Request) {
     try {
         await dbConnect();
@@ -74,8 +76,13 @@ export async function POST(req: Request) {
             notificationsSent
         }, { status: 200 });
 
-    } catch (error) {
-        console.error("Broadcast error:", error);
+    } catch (error: any) {
+        console.error("Broadcast error:", {
+            message: error?.message,
+            name: error?.name,
+            code: error?.code,
+            stack: error?.stack,
+        });
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
