@@ -8,6 +8,11 @@ import { ensureDefaultAccounts } from "@/app/lib/seed";
 
 export const runtime = "nodejs";
 
+const DEFAULT_CITIZEN_LOCATION = {
+    type: "Point" as const,
+    coordinates: [77.2090, 28.6139],
+};
+
 export async function POST(req: Request) {
     try {
         let body;
@@ -36,7 +41,16 @@ export async function POST(req: Request) {
         const { username, email, password, phoneNumber, address, location } = validation.data;
 
         await dbConnect();
-        await ensureDefaultAccounts();
+
+        // Demo account seeding should never block citizen registration.
+        ensureDefaultAccounts().catch((error) => {
+            console.error("Default account seed failed during registration:", {
+                message: error?.message,
+                name: error?.name,
+                code: error?.code,
+                stack: error?.stack,
+            });
+        });
 
         // Check if user already exists
         const existingUser = await User.findOne({
@@ -58,7 +72,7 @@ export async function POST(req: Request) {
             location.coordinates.length === 2 &&
             location.coordinates.every((coordinate) => Number.isFinite(coordinate));
 
-        if (!hasValidLocation) {
+        if (location && !hasValidLocation) {
             console.error("Registration invalid location payload:", location);
             return NextResponse.json(
                 { error: "Valid location coordinates are required" },
@@ -66,7 +80,9 @@ export async function POST(req: Request) {
             );
         }
 
-        const validLocation = location as { type: "Point"; coordinates: number[] };
+        const validLocation = hasValidLocation
+            ? location as { type: "Point"; coordinates: number[] }
+            : DEFAULT_CITIZEN_LOCATION;
 
         // Create new user
         const newUser = await User.create({
@@ -106,6 +122,21 @@ export async function POST(req: Request) {
             );
         }
 
+        if (error?.name === "ValidationError") {
+            console.error("Registration mongoose validation error:", error?.errors);
+            return NextResponse.json(
+                { error: "Registration data is invalid. Please check all fields and location details." },
+                { status: 400 }
+            );
+        }
+
+        if (error?.name === "MongoServerSelectionError" || error?.name === "MongooseServerSelectionError") {
+            return NextResponse.json(
+                { error: "Database connection failed. Please try again shortly." },
+                { status: 503 }
+            );
+        }
+
         console.error("Registration error:", {
             message: error?.message,
             name: error?.name,
@@ -113,7 +144,7 @@ export async function POST(req: Request) {
             stack: error?.stack,
         });
         return NextResponse.json(
-            { error: "Internal server error" },
+            { error: "Registration failed on the server. Please check the details and try again." },
             { status: 500 }
         );
     }

@@ -36,7 +36,16 @@ export async function POST(req: Request) {
         const { username, password, phoneNumber, role } = validation.data;
 
         await dbConnect();
-        await ensureDefaultAccounts();
+        try {
+            await ensureDefaultAccounts();
+        } catch (error: any) {
+            console.error("Default account seed failed during login:", {
+                message: error?.message,
+                name: error?.name,
+                code: error?.code,
+                stack: error?.stack,
+            });
+        }
 
         // Find user by username
         // Note: Logic here supports finding only by username as per standard, 
@@ -132,7 +141,7 @@ export async function POST(req: Request) {
             stack: error?.stack,
         });
         return NextResponse.json(
-            { error: "Internal server error" },
+            { error: "Login failed on the server. Please try again shortly." },
             { status: 500 }
         );
     }

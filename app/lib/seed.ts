@@ -43,24 +43,30 @@ export function ensureDefaultAccounts() {
 
 async function seedDefaultAccounts() {
     for (const account of DEFAULT_ACCOUNTS) {
+        const hashedPassword = await bcrypt.hash(account.password, 10);
         const existingUser = await User.findOne({
             $or: [{ email: account.email }, { username: account.username }],
         });
 
         if (existingUser) {
-            continue;
+            existingUser.username = account.username;
+            existingUser.email = account.email;
+            existingUser.password = hashedPassword;
+            existingUser.phoneNumber = account.phoneNumber;
+            existingUser.address = account.address;
+            existingUser.location = account.location;
+            existingUser.role = account.role;
+            await existingUser.save();
+        } else {
+            await User.create({
+                username: account.username,
+                email: account.email,
+                password: hashedPassword,
+                phoneNumber: account.phoneNumber,
+                address: account.address,
+                location: account.location,
+                role: account.role,
+            });
         }
-
-        const hashedPassword = await bcrypt.hash(account.password, 10);
-
-        await User.create({
-            username: account.username,
-            email: account.email,
-            password: hashedPassword,
-            phoneNumber: account.phoneNumber,
-            address: account.address,
-            location: account.location,
-            role: account.role,
-        });
     }
 }
