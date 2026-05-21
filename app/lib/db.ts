@@ -15,7 +15,7 @@ const cached = globalThis.mongooseCache ?? (globalThis.mongooseCache = {
 });
 
 async function dbConnect() {
-    const mongoUri = process.env.MONGO_URI;
+    const mongoUri = process.env.MONGO_URI?.trim() || process.env.MONGODB_URI?.trim();
 
     if (!mongoUri) {
         throw new Error(

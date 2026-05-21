@@ -15,6 +15,12 @@ interface RoleLoginPageProps {
     icon: "admin" | "driver";
 }
 
+function getErrorMessage(error: unknown) {
+    if (typeof error === "string") return error;
+    if (error && typeof error === "object") return "Please check your login details and try again.";
+    return "Login failed. Please check your credentials.";
+}
+
 export default function RoleLoginPage({ role, title, subtitle, accentClass, icon }: RoleLoginPageProps) {
     const router = useRouter();
     const [formData, setFormData] = useState({
@@ -37,7 +43,7 @@ export default function RoleLoginPage({ role, title, subtitle, accentClass, icon
             localStorage.setItem("user", JSON.stringify(user));
             router.push(role === "admin" ? "/dashboard/admin" : "/dashboard/driver");
         } catch (err: any) {
-            setError(err.response?.data?.error || "Login failed. Please check your credentials.");
+            setError(getErrorMessage(err.response?.data?.error));
         } finally {
             setLoading(false);
         }

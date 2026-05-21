@@ -5,6 +5,7 @@ import User from "../../../models/User/user";
 import { loginSchema } from "../../../lib/validations";
 import { signAuthToken } from "@/app/lib/auth";
 import { ensureDefaultAccounts } from "@/app/lib/seed";
+import { apiErrorResponse, logServerError } from "@/app/lib/apiError";
 
 export const runtime = "nodejs";
 
@@ -39,12 +40,7 @@ export async function POST(req: Request) {
         try {
             await ensureDefaultAccounts();
         } catch (error: any) {
-            console.error("Default account seed failed during login:", {
-                message: error?.message,
-                name: error?.name,
-                code: error?.code,
-                stack: error?.stack,
-            });
+            logServerError("Default account seed failed during login", error);
         }
 
         // Find user by username
@@ -134,15 +130,6 @@ export async function POST(req: Request) {
         return response;
 
     } catch (error: any) {
-        console.error("Login error:", {
-            message: error?.message,
-            name: error?.name,
-            code: error?.code,
-            stack: error?.stack,
-        });
-        return NextResponse.json(
-            { error: "Login failed on the server. Please try again shortly." },
-            { status: 500 }
-        );
+        return apiErrorResponse("Login", error);
     }
 }

@@ -5,6 +5,7 @@ import dbConnect from "../../../lib/db"; // Adjust path as necessary
 import User from "../../../models/User/user"; // Adjust path as necessary
 import { registerSchema } from "../../../lib/validations";
 import { ensureDefaultAccounts } from "@/app/lib/seed";
+import { apiErrorResponse, logServerError } from "@/app/lib/apiError";
 
 export const runtime = "nodejs";
 
@@ -44,12 +45,7 @@ export async function POST(req: Request) {
 
         // Demo account seeding should never block citizen registration.
         ensureDefaultAccounts().catch((error) => {
-            console.error("Default account seed failed during registration:", {
-                message: error?.message,
-                name: error?.name,
-                code: error?.code,
-                stack: error?.stack,
-            });
+            logServerError("Default account seed failed during registration", error);
         });
 
         // Check if user already exists
@@ -111,41 +107,6 @@ export async function POST(req: Request) {
         );
 
     } catch (error: any) {
-        if (error?.code === 11000) {
-            console.error("Registration duplicate key error:", {
-                keyPattern: error?.keyPattern,
-                keyValue: error?.keyValue,
-            });
-            return NextResponse.json(
-                { error: "User with this email or username already exists" },
-                { status: 409 }
-            );
-        }
-
-        if (error?.name === "ValidationError") {
-            console.error("Registration mongoose validation error:", error?.errors);
-            return NextResponse.json(
-                { error: "Registration data is invalid. Please check all fields and location details." },
-                { status: 400 }
-            );
-        }
-
-        if (error?.name === "MongoServerSelectionError" || error?.name === "MongooseServerSelectionError") {
-            return NextResponse.json(
-                { error: "Database connection failed. Please try again shortly." },
-                { status: 503 }
-            );
-        }
-
-        console.error("Registration error:", {
-            message: error?.message,
-            name: error?.name,
-            code: error?.code,
-            stack: error?.stack,
-        });
-        return NextResponse.json(
-            { error: "Registration failed on the server. Please check the details and try again." },
-            { status: 500 }
-        );
+        return apiErrorResponse("Registration", error);
     }
 }

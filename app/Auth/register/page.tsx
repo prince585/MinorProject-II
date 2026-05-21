@@ -31,6 +31,12 @@ const MapPicker = dynamic(() => import("../../components/MapPicker"), {
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
+function getErrorMessage(error: unknown) {
+    if (typeof error === "string") return error;
+    if (error && typeof error === "object") return "Please check the highlighted fields and try again.";
+    return "Registration failed. Please try again.";
+}
+
 export default function RegisterPage() {
     const router = useRouter();
     const [formData, setFormData] = useState<RegisterFormData>({
@@ -159,7 +165,7 @@ export default function RegisterPage() {
             }
         } catch (err: any) {
             setError(
-                err.response?.data?.error || "Registration failed. Please try again."
+                getErrorMessage(err.response?.data?.error)
             );
         } finally {
             setLoading(false);

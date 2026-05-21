@@ -48,3 +48,13 @@ Driver password: Driver@123
 ```
 
 Use `/admin/login` for the admin console and `/driver/login` for the driver panel.
+
+## Deployment Health Check
+
+After deployment, open:
+
+```bash
+/api/health
+```
+
+It reports whether `MONGO_URI`, `JWT_SECRET`, and the MongoDB Atlas connection are working without exposing secret values.

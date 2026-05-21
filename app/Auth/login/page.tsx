@@ -11,6 +11,12 @@ import { loginSchema } from "../../lib/validations";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
+function getErrorMessage(error: unknown) {
+    if (typeof error === "string") return error;
+    if (error && typeof error === "object") return "Please check your login details and try again.";
+    return "Invalid credentials. Please try again.";
+}
+
 export default function LoginPage() {
     const router = useRouter();
     const [formData, setFormData] = useState<LoginFormData>({
@@ -57,7 +63,7 @@ export default function LoginPage() {
             }
         } catch (err: any) {
             setError(
-                err.response?.data?.error || "Invalid credentials. Please try again."
+                getErrorMessage(err.response?.data?.error)
             );
         } finally {
             setLoading(false);

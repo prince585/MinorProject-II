@@ -8,7 +8,7 @@ export interface AuthTokenPayload {
 }
 
 export function getJwtSecret() {
-    const jwtSecret = process.env.JWT_SECRET;
+    const jwtSecret = process.env.JWT_SECRET?.trim();
 
     if (!jwtSecret) {
         throw new Error(
