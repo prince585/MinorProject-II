@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Bell, Home, User, LogOut, Map, Activity } from "lucide-react";
+import { Activity, Bell, Home, LogOut, Map, Radio, Truck, User } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
 
@@ -44,6 +45,9 @@ export default function CitizenDashboard() {
     const [distance, setDistance] = useState<number | null>(null);
     const [status, setStatus] = useState("Waiting for updates...");
     const [activeTab, setActiveTab] = useState("dashboard");
+    const [demoStatus, setDemoStatus] = useState<"Far" | "Approaching" | "Nearby" | null>(null);
+    const [showDemoNotification, setShowDemoNotification] = useState(false);
+    const demoTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
     // Mock Login - in real app, use session/context
     // For MVP, we'll fetch a hardcoded user or from local storage if we had login persistence.
@@ -117,6 +121,27 @@ export default function CitizenDashboard() {
         }
     }, [user, vehicle]);
 
+    useEffect(() => {
+        return () => {
+            demoTimersRef.current.forEach(clearTimeout);
+        };
+    }, []);
+
+    const handleDemoNotification = () => {
+        // Demo-only frontend simulation for academic presentations.
+        // This does not update vehicle data, notifications, GPS values, or MongoDB records.
+        demoTimersRef.current.forEach(clearTimeout);
+        setShowDemoNotification(true);
+        setDemoStatus("Far");
+
+        demoTimersRef.current = [
+            setTimeout(() => setDemoStatus("Approaching"), 900),
+            setTimeout(() => setDemoStatus("Nearby"), 2600),
+            setTimeout(() => setShowDemoNotification(false), 5600),
+            setTimeout(() => setDemoStatus(null), 7000),
+        ];
+    };
+
     if (!user) return <div className="flex h-screen items-center justify-center">Loading...</div>;
 
     const [userLng, userLat] = user.location?.coordinates || [77.2090, 28.6139];
@@ -126,8 +151,72 @@ export default function CitizenDashboard() {
         ? [vehicle.currentLocation.coordinates[1], vehicle.currentLocation.coordinates[0]]
         : undefined;
 
+    const displayedStatus = demoStatus ?? status;
+    const isDemoActive = demoStatus !== null;
+    const statusClass = isDemoActive
+        ? demoStatus === "Nearby"
+            ? "bg-emerald-100 text-emerald-700 border border-emerald-200 shadow-emerald-200/70 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30"
+            : demoStatus === "Approaching"
+                ? "bg-cyan-100 text-cyan-700 border border-cyan-200 shadow-cyan-200/70 dark:bg-cyan-500/15 dark:text-cyan-300 dark:border-cyan-500/30"
+                : "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-700/60 dark:text-slate-300 dark:border-slate-600"
+        : distance !== null && distance <= 700
+            ? "bg-green-100 text-green-700 border border-green-200"
+            : "bg-gray-100 text-gray-600 border border-gray-200";
+
     return (
         <div className="flex h-screen bg-gray-100 dark:bg-gray-900 font-sans">
+            <AnimatePresence>
+                {showDemoNotification && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -24, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -18, scale: 0.98 }}
+                        transition={{ type: "spring", stiffness: 320, damping: 26 }}
+                        className="fixed top-5 right-5 z-[10000] w-[calc(100vw-2.5rem)] max-w-md overflow-hidden rounded-2xl border border-emerald-200/80 bg-white/95 shadow-2xl shadow-emerald-900/20 backdrop-blur-xl dark:border-emerald-500/30 dark:bg-gray-900/95"
+                    >
+                        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500" />
+                        <div className="relative p-5">
+                            <div className="absolute right-5 top-5 h-14 w-14 animate-ping rounded-full bg-emerald-400/20" />
+                            <div className="flex gap-4">
+                                <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/30">
+                                    <Truck className="h-6 w-6" />
+                                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-cyan-400">
+                                        <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
+                                    </span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="mb-1 flex items-center gap-2">
+                                        <Radio className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">
+                                            Municipality Alert
+                                        </p>
+                                    </div>
+                                    <h3 className="text-base font-bold text-gray-950 dark:text-white">
+                                        Waste collection truck is nearby
+                                    </h3>
+                                    <p className="mt-1 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                                        Please prepare your waste for pickup. The demo route is now simulating a nearby arrival.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
+                                {["Far", "Approaching", "Nearby"].map((step) => (
+                                    <div
+                                        key={step}
+                                        className={`rounded-lg px-2 py-2 transition-all ${displayedStatus === step
+                                                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
+                                                : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                                            }`}
+                                    >
+                                        {step}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Sidebar */}
             <aside className="w-64 bg-white dark:bg-gray-800 shadow-xl hidden md:flex flex-col">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -210,10 +299,15 @@ export default function CitizenDashboard() {
                             {/* Status Panel */}
                             <div className="space-y-6">
                                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-                                        <Activity className="h-5 w-5 text-blue-500" />
-                                        Collection Status
-                                    </h3>
+                                    <div className="mb-4 flex items-start justify-between gap-3">
+                                        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                                            <Activity className="h-5 w-5 text-blue-500" />
+                                            Collection Status
+                                        </h3>
+                                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
+                                            Live
+                                        </span>
+                                    </div>
 
                                     <div className="flex flex-col items-center justify-center py-6 text-center">
                                         {distance !== null ? (
@@ -223,16 +317,35 @@ export default function CitizenDashboard() {
                                                 </div>
                                                 <p className="text-sm text-gray-500 uppercase tracking-wide font-medium">Distance from you</p>
 
-                                                <div className={`mt-6 px-4 py-2 rounded-lg font-medium text-sm ${distance <= 700
-                                                        ? "bg-green-100 text-green-700 border border-green-200"
-                                                        : "bg-gray-100 text-gray-600 border border-gray-200"
-                                                    }`}>
-                                                    {status}
+                                                <div className={`mt-6 px-4 py-2 rounded-lg font-medium text-sm shadow-sm transition-all ${statusClass}`}>
+                                                    {displayedStatus}
                                                 </div>
                                             </>
                                         ) : (
                                             <div className="animate-pulse text-gray-400">Loading vehicle data...</div>
                                         )}
+                                    </div>
+
+                                    <div className="mt-2 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm dark:bg-gray-800 dark:text-emerald-300">
+                                                <Bell className={`h-5 w-5 ${isDemoActive ? "animate-bounce" : ""}`} />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-semibold text-gray-900 dark:text-white">Presentation simulator</p>
+                                                <p className="mt-1 text-xs leading-5 text-gray-600 dark:text-gray-300">
+                                                    Preview the citizen truck alert without real GPS hardware.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleDemoNotification}
+                                            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-900/25 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                                        >
+                                            <Truck className="h-4 w-4" />
+                                            Demo Notification
+                                        </button>
                                     </div>
                                 </div>
 
