@@ -33,7 +33,7 @@ export async function POST(req: Request) {
             );
         }
 
-        const { username, email, password, phoneNumber, role, address, location } = validation.data;
+        const { username, email, password, phoneNumber, address, location } = validation.data;
 
         await dbConnect();
         await ensureDefaultAccounts();
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
             email,
             password: hashedPassword,
             phoneNumber,
-            role,
+            role: "citizen",
             address,
             location: hasValidLocation ? {
                 type: "Point",

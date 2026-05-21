@@ -34,3 +34,17 @@ npm run dev
 ```
 
 The login, register, broadcast, dashboard polling, user lookup, and notification API routes use the shared cached Mongoose connection helper.
+
+## Default Demo Accounts
+
+The server safely creates these accounts if they do not already exist:
+
+```bash
+Admin email: admin@ecotracker.com
+Admin password: Admin@123
+
+Driver email: driver@ecotracker.com
+Driver password: Driver@123
+```
+
+Use `/admin/login` for the admin console and `/driver/login` for the driver panel.

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/app/lib/db";
+import { getAuthTokenPayloadFromRequest } from "@/app/lib/auth";
 import Vehicle from "@/app/models/Vehicle/vehicle";
 import User from "@/app/models/User/user";
 
@@ -32,6 +33,12 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         await dbConnect();
+        const authUser = getAuthTokenPayloadFromRequest(req);
+
+        if (!authUser || !["admin", "driver"].includes(authUser.role)) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         let body;
 
         try {
@@ -54,6 +61,10 @@ export async function POST(req: Request) {
         // Check if vehicle operator exists and has a role that can move trucks
         const driver = await User.findById(driverId);
         if (!driver || !["admin", "driver"].includes(driver.role)) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+        }
+
+        if (authUser.role === "driver" && authUser.userId !== String(driver._id)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 

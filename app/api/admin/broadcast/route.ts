@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import dbConnect from "@/app/lib/db";
+import { getAuthTokenPayloadFromRequest } from "@/app/lib/auth";
 import User from "@/app/models/User/user";
 import Notification from "@/app/models/Notification/notification";
 import Vehicle from "@/app/models/Vehicle/vehicle";
@@ -10,15 +11,44 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        const { vehicleId, radius = 700 } = await req.json();
+        const authUser = getAuthTokenPayloadFromRequest(req);
+
+        if (authUser?.role !== "admin") {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        let body;
+
+        try {
+            body = await req.json();
+        } catch (error) {
+            console.error("Broadcast JSON parse error:", error);
+            return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+        }
+
+        const { vehicleId, radius = 700 } = body;
+
+        if (!mongoose.Types.ObjectId.isValid(vehicleId)) {
+            return NextResponse.json({ error: "Invalid vehicle ID" }, { status: 400 });
+        }
+
+        const alertRadius = Number(radius);
+
+        if (!Number.isFinite(alertRadius) || alertRadius <= 0) {
+            return NextResponse.json({ error: "Invalid alert radius" }, { status: 400 });
+        }
 
         // 1. Get current vehicle location
         const vehicle = await Vehicle.findById(vehicleId);
-        if (!vehicle || !vehicle.currentLocation) {
+        if (!vehicle || !vehicle.currentLocation?.coordinates?.length) {
             return NextResponse.json({ error: "Active vehicle not found" }, { status: 404 });
         }
 
         const [lng, lat] = vehicle.currentLocation.coordinates;
+
+        if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+            return NextResponse.json({ error: "Vehicle has invalid coordinates" }, { status: 400 });
+        }
 
         // 2. Find users within radius (in meters)
         // We use $near with $maxDistance
@@ -29,7 +59,7 @@ export async function POST(req: Request) {
                         type: "Point",
                         coordinates: [lng, lat],
                     },
-                    $maxDistance: radius, // meters
+                    $maxDistance: alertRadius, // meters
                 },
             },
             role: "citizen", // Targeting citizens only

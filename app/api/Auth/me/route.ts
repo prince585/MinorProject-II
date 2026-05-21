@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/app/lib/db";
-import { verifyAuthToken } from "@/app/lib/auth";
+import { getAuthTokenPayloadFromRequest } from "@/app/lib/auth";
 import User from "@/app/models/User/user";
 
 export const runtime = "nodejs";
@@ -9,18 +9,11 @@ export async function GET(req: Request) {
     try {
         await dbConnect();
 
-        const cookieHeader = req.headers.get("cookie") || "";
-        const token = cookieHeader
-            .split(";")
-            .map((cookie) => cookie.trim())
-            .find((cookie) => cookie.startsWith("token="))
-            ?.split("=")[1];
+        const payload = getAuthTokenPayloadFromRequest(req);
 
-        if (!token) {
+        if (!payload) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
-
-        const payload = verifyAuthToken(decodeURIComponent(token));
         const user = await User.findById(payload.userId).select("-password");
 
         if (!user) {

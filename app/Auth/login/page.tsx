@@ -196,6 +196,14 @@ export default function LoginPage() {
                             Register now
                         </Link>
                     </div>
+                    <div className="flex items-center justify-center gap-4 text-sm">
+                        <Link href="/admin/login" className="font-medium text-gray-500 hover:text-blue-600 dark:text-gray-400">
+                            Admin login
+                        </Link>
+                        <Link href="/driver/login" className="font-medium text-gray-500 hover:text-blue-600 dark:text-gray-400">
+                            Driver login
+                        </Link>
+                    </div>
                 </form>
             </motion.div>
         </div>

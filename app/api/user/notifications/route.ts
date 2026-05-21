@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import dbConnect from "@/app/lib/db";
 import Notification from "@/app/models/Notification/notification";
 
@@ -13,6 +14,10 @@ export async function GET(req: Request) {
 
         if (!userId) {
             return NextResponse.json({ error: "User ID required" }, { status: 400 });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
         }
 
         const notifications = await Notification.find({ recipient: userId } as any)
@@ -35,10 +40,23 @@ export async function GET(req: Request) {
 export async function PUT(req: Request) {
     try {
         await dbConnect();
-        const { notificationIds } = await req.json();
+        let body;
+
+        try {
+            body = await req.json();
+        } catch (error) {
+            console.error("Update notifications JSON parse error:", error);
+            return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+        }
+
+        const { notificationIds } = body;
 
         if (!notificationIds || !Array.isArray(notificationIds)) {
             return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+        }
+
+        if (!notificationIds.every((id) => mongoose.Types.ObjectId.isValid(id))) {
+            return NextResponse.json({ error: "Invalid notification ID" }, { status: 400 });
         }
 
         await Notification.updateMany(

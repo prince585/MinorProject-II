@@ -26,7 +26,7 @@ const geoPointSchema = new Schema(
                     Array.isArray(coordinates) &&
                     coordinates.length === 2 &&
                     coordinates.every((coordinate) => Number.isFinite(coordinate)),
-                message: "Vehicle coordinates must be [longitude, latitude].",
+                message: "Coordinates must contain longitude and latitude",
             },
         },
     },
