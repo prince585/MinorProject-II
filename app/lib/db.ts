@@ -15,9 +15,18 @@ const cached = globalThis.mongooseCache ?? (globalThis.mongooseCache = {
 });
 
 async function dbConnect() {
-    const mongoUri = process.env.MONGO_URI?.trim() || process.env.MONGODB_URI?.trim();
+    const mongoUri = process.env.MONGO_URI?.trim();
+    const readyState = mongoose.connection.readyState;
+    const hasMongoUri = Boolean(mongoUri);
+
+    console.info("[dbConnect] Runtime diagnostics", {
+        nodeEnv: process.env.NODE_ENV,
+        hasMongoUri,
+        readyState,
+    });
 
     if (!mongoUri) {
+        console.error("[dbConnect] Missing required environment variable: MONGO_URI");
         throw new Error(
             "MONGO_URI is not configured. Add it to your local .env.local file and to your Vercel Environment Variables."
         );
@@ -39,14 +48,22 @@ async function dbConnect() {
             serverSelectionTimeoutMS: 10000,
         };
 
+        console.info("[dbConnect] Opening new MongoDB connection");
         cached.promise = mongoose.connect(mongoUri, opts);
     }
 
     try {
         cached.conn = await cached.promise;
-        console.log("MongoDB connected successfully");
+        console.info("[dbConnect] MongoDB connected successfully", {
+            readyState: cached.conn.connection.readyState,
+        });
     } catch (e) {
-        console.error("MongoDB connection failed", e);
+        console.error("[dbConnect] MongoDB connection failed", {
+            message: (e as Error)?.message,
+            name: (e as Error)?.name,
+            stack: (e as Error)?.stack,
+            readyState: mongoose.connection.readyState,
+        });
         cached.promise = null;
         throw e;
     }

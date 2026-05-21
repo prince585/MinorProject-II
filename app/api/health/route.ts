@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/app/lib/db";
+import mongoose from "mongoose";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-    const hasMongoUri = Boolean(process.env.MONGO_URI?.trim() || process.env.MONGODB_URI?.trim());
+    const hasMongoUri = Boolean(process.env.MONGO_URI?.trim());
     const hasJwtSecret = Boolean(process.env.JWT_SECRET?.trim());
 
     try {
@@ -14,6 +15,8 @@ export async function GET() {
             {
                 ok: true,
                 mongo: "connected",
+                mongooseReadyState: mongoose.connection.readyState,
+                runtime: "nodejs",
                 env: {
                     MONGO_URI: hasMongoUri,
                     JWT_SECRET: hasJwtSecret,
@@ -33,6 +36,8 @@ export async function GET() {
             {
                 ok: false,
                 mongo: "failed",
+                mongooseReadyState: mongoose.connection.readyState,
+                runtime: "nodejs",
                 error: error?.message || "Health check failed",
                 env: {
                     MONGO_URI: hasMongoUri,
