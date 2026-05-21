@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import dbConnect from "../../../lib/db";
 import User from "../../../models/User/user";
 import { loginSchema } from "../../../lib/validations";
+import { signAuthToken } from "@/app/lib/auth";
+import { ensureDefaultAccounts } from "@/app/lib/seed";
 
 export const runtime = "nodejs";
 
@@ -32,9 +33,10 @@ export async function POST(req: Request) {
             );
         }
 
-        const { username, password, phoneNumber } = validation.data;
+        const { username, password, phoneNumber, role } = validation.data;
 
         await dbConnect();
+        await ensureDefaultAccounts();
 
         // Find user by username
         // Note: Logic here supports finding only by username as per standard, 
@@ -42,7 +44,13 @@ export async function POST(req: Request) {
         // However, User model makes phoneNumber optional. 
         // We will stick to username lookup primarily.
 
-        const user = await User.findOne({ username });
+        const normalizedIdentifier = username.trim().toLowerCase();
+        const user = await User.findOne({
+            $or: [
+                { username: username.trim() },
+                { email: normalizedIdentifier },
+            ],
+        });
 
         if (!user) {
             return NextResponse.json(
@@ -51,8 +59,15 @@ export async function POST(req: Request) {
             );
         }
 
+        if (role && user.role !== role) {
+            return NextResponse.json(
+                { error: "This account is not authorized for this login portal" },
+                { status: 403 }
+            );
+        }
+
         // Optional: strict check if phoneNumber was provided and must match
-        if (phoneNumber && user.phoneNumber !== phoneNumber) {
+        if (user.role === "citizen" && phoneNumber && user.phoneNumber !== phoneNumber) {
             return NextResponse.json(
                 { error: "Invalid credentials" }, // Obscure detail
                 { status: 401 }
@@ -75,20 +90,13 @@ export async function POST(req: Request) {
             );
         }
 
-        const jwtSecret = process.env.JWT_SECRET;
-
-        if (!jwtSecret) {
-            throw new Error(
-                "JWT_SECRET is not configured. Add it to your local .env.local file and to your Vercel Environment Variables."
-            );
-        }
-
         // Generate JWT
-        const token = jwt.sign(
-            { userId: user._id, username: user.username, email: user.email },
-            jwtSecret,
-            { expiresIn: "1d" }
-        );
+        const token = signAuthToken({
+            userId: String(user._id),
+            username: user.username,
+            email: user.email,
+            role: user.role,
+        });
 
         const response = NextResponse.json(
             {

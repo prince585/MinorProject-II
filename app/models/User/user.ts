@@ -10,7 +10,7 @@ export interface IUser extends Document {
         type: string;
         coordinates: number[]; // [longitude, latitude]
     };
-    role: "citizen" | "admin";
+    role: "citizen" | "admin" | "driver";
     areaCode?: string;
     notificationPreferences?: {
         email: boolean;
@@ -58,7 +58,7 @@ const userSchema = new Schema<IUser>(
         },
         role: {
             type: String,
-            enum: ["citizen", "admin"],
+            enum: ["citizen", "admin", "driver"],
             default: "citizen",
         },
         areaCode: {

@@ -21,7 +21,13 @@ export default function LandingPage() {
                     </nav>
                     <div className="flex items-center gap-4">
                         <Link href="/Auth/login" className="text-sm font-medium hover:text-primary transition-colors">
-                            Log in
+                            Citizen
+                        </Link>
+                        <Link href="/admin/login" className="text-sm font-medium hover:text-primary transition-colors">
+                            Admin
+                        </Link>
+                        <Link href="/driver/login" className="text-sm font-medium hover:text-primary transition-colors">
+                            Driver
                         </Link>
                         <Link
                             href="/Auth/register"

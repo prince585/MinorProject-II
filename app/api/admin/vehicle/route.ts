@@ -32,16 +32,28 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        const body = await req.json();
+        let body;
+
+        try {
+            body = await req.json();
+        } catch (error) {
+            console.error("Vehicle update JSON parse error:", error);
+            return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+        }
+
         const { driverId, lat, lng, status } = body;
 
-        if (!driverId || !lat || !lng) {
+        if (!driverId || !Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
-        // Check if driver exists and is admin
+        if (status && !["active", "inactive", "paused"].includes(status)) {
+            return NextResponse.json({ error: "Invalid vehicle status" }, { status: 400 });
+        }
+
+        // Check if vehicle operator exists and has a role that can move trucks
         const driver = await User.findById(driverId);
-        if (!driver || driver.role !== "admin") {
+        if (!driver || !["admin", "driver"].includes(driver.role)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 
@@ -52,7 +64,7 @@ export async function POST(req: Request) {
             {
                 currentLocation: {
                     type: "Point",
-                    coordinates: [lng, lat],
+                    coordinates: [Number(lng), Number(lat)],
                 },
                 routeStatus: status || "active",
                 lastUpdated: new Date(),

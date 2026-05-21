@@ -5,7 +5,7 @@ export const registerSchema = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     phoneNumber: z.string().min(1,"phone number is required"),
-    role: z.enum(["citizen", "admin"]),
+    role: z.enum(["citizen", "admin", "driver"]),
     address: z.string().min(1,"address is required"),
     location: z.object({
         type: z.literal("Point"),
@@ -14,8 +14,8 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-    username: z.string().min(1, "Username is required"),
-    // Include phoneNumber as it was in the original login route, assuming it's required for this specific app's auth flow
-    phoneNumber: z.string().min(1, "phoneNumber is required"),
+    username: z.string().min(1, "Username or email is required"),
+    phoneNumber: z.string().optional(),
     password: z.string().min(1, "Password is required"),
+    role: z.enum(["citizen", "admin", "driver"]).optional(),
 });

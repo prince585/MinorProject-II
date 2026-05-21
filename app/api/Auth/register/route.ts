@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import dbConnect from "../../../lib/db"; // Adjust path as necessary
 import User from "../../../models/User/user"; // Adjust path as necessary
 import { registerSchema } from "../../../lib/validations";
+import { ensureDefaultAccounts } from "@/app/lib/seed";
 
 export const runtime = "nodejs";
 
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
         const { username, email, password, phoneNumber, role, address, location } = validation.data;
 
         await dbConnect();
+        await ensureDefaultAccounts();
 
         // Check if user already exists
         const existingUser = await User.findOne({
