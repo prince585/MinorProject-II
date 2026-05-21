@@ -18,6 +18,29 @@ export interface IUser extends Document {
     };
 }
 
+const geoPointSchema = new Schema(
+    {
+        type: {
+            type: String,
+            enum: ["Point"],
+            required: true,
+            default: "Point",
+        },
+        coordinates: {
+            type: [Number],
+            required: true,
+            validate: {
+                validator: (coordinates: number[]) =>
+                    Array.isArray(coordinates) &&
+                    coordinates.length === 2 &&
+                    coordinates.every((coordinate) => Number.isFinite(coordinate)),
+                message: "Location coordinates must be [longitude, latitude].",
+            },
+        },
+    },
+    { _id: false }
+);
+
 const userSchema = new Schema<IUser>(
     {
         username: {
@@ -45,17 +68,7 @@ const userSchema = new Schema<IUser>(
             type: String,
             trim: true,
         },
-        location: {
-            type: {
-                type: String,
-                enum: ["Point"],
-                default: undefined,
-            },
-            coordinates: {
-                type: [Number], // [longitude, latitude]
-            },
-            default: undefined,
-        },
+        location: geoPointSchema,
         role: {
             type: String,
             enum: ["citizen", "admin", "driver"],

@@ -10,6 +10,29 @@ export interface IVehicle extends Document {
     lastUpdated: Date;
 }
 
+const geoPointSchema = new Schema(
+    {
+        type: {
+            type: String,
+            enum: ["Point"],
+            required: true,
+            default: "Point",
+        },
+        coordinates: {
+            type: [Number],
+            required: true,
+            validate: {
+                validator: (coordinates: number[]) =>
+                    Array.isArray(coordinates) &&
+                    coordinates.length === 2 &&
+                    coordinates.every((coordinate) => Number.isFinite(coordinate)),
+                message: "Vehicle coordinates must be [longitude, latitude].",
+            },
+        },
+    },
+    { _id: false }
+);
+
 const vehicleSchema = new Schema<IVehicle>(
     {
         driverId: {
@@ -18,15 +41,8 @@ const vehicleSchema = new Schema<IVehicle>(
             required: true,
         },
         currentLocation: {
-            type: {
-                type: String,
-                enum: ["Point"],
-                default: "Point",
-            },
-            coordinates: {
-                type: [Number],
-                required: true,
-            },
+            type: geoPointSchema,
+            required: true,
         },
         routeStatus: {
             type: String,
